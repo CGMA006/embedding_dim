@@ -1,14 +1,30 @@
 import nltk
 import string
 from nltk.stem import WordNetLemmatizer
+from sklearn.naive_bayes import MultinomialNB
 
-#nltk.download('wordnet')
-#nltk.download('punkt_tab')
 
-sentences = ["Hattile padyo pwa.",
-            "Musale padyo phush phush."]
+# nltk.download('wordnet')
+# nltk.download('punkt')
+
+#Training sentences
+sentences = [
+    "Hello there!",
+    "How are you?",
+    "Goodbye!"
+]
+
+#Bot replies (used as labels)
+labels = [
+    "Hi! How can I help you?",
+    "I’m doing well, thanks!",
+    "Goodbye! Have a nice day!"
+]
+
+#lemmatizer
 lemmatizer = WordNetLemmatizer()
 
+# Step 3: Normalize function
 def normalize(sentence):
     tokens = nltk.word_tokenize(sentence.lower())
     lemmas = [lemmatizer.lemmatize(t) for t in tokens]
@@ -26,19 +42,35 @@ for s in normal:
 vocab = sorted(set(all_words))
 print("Vocabulary:", vocab)
 
-def bag_of_words(sentence,vocab):
+
+def bag_of_words(sentence, vocab):
     sentence_words = normalize(sentence)
-    
-    # Create vector: 1 if word exists, 0 otherwise
     vector = []
     for word in vocab:
-     if word in sentence_words:
-        vector.append(1)
-     else:
-        vector.append(0)
-    
+        if word in sentence_words:
+            vector.append(1)
+        else:
+            vector.append(0)
     return vector
 
-sentences = ["Hattile padyo pwa.", "Musale padyo phush phush."]
+# Convert all sentences to vectors
 vectors = [bag_of_words(s, vocab) for s in sentences]
-print(vectors)
+print("Vectors:", vectors)
+
+#  Train model
+model = MultinomialNB()
+model.fit(vectors, labels)
+
+# Step 7: Chatting with the bot
+def chat():
+    while True:
+        user_input = input("You: ")
+        if user_input.lower() == "quit":
+            print("Bot: Goodbye!")
+            break
+        vector = [bag_of_words(user_input, vocab)]
+        prediction = model.predict(vector)
+        print("Bot:", prediction[0])
+
+# Start chat
+chat()
