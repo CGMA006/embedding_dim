@@ -1,30 +1,17 @@
 import nltk
 import string
 from nltk.stem import WordNetLemmatizer
-from sklearn.naive_bayes import MultinomialNB
-
+import numpy as np
 
 # nltk.download('wordnet')
 # nltk.download('punkt')
 
-#Training sentences
-sentences = [
-    "Hello there!",
-    "How are you?",
-    "Goodbye!"
-]
-
-#Bot replies (used as labels)
-labels = [
-    "Hi! How can I help you?",
-    "I’m doing well, thanks!",
-    "Goodbye! Have a nice day!"
-]
+sentences = ["Hello there!", "How are you?", "Goodbye!"]
 
 #lemmatizer
 lemmatizer = WordNetLemmatizer()
 
-# Step 3: Normalize function
+#Normalize function
 def normalize(sentence):
     tokens = nltk.word_tokenize(sentence.lower())
     lemmas = [lemmatizer.lemmatize(t) for t in tokens]
@@ -39,38 +26,27 @@ all_words = []
 for s in normal:
     all_words.extend(s)
 
+
 vocab = sorted(set(all_words))
+word_to_idx = {w: i for i, w in enumerate(vocab)}
 print("Vocabulary:", vocab)
 
 
-def bag_of_words(sentence, vocab):
-    sentence_words = normalize(sentence)
-    vector = []
-    for word in vocab:
-        if word in sentence_words:
-            vector.append(1)
-        else:
-            vector.append(0)
-    return vector
+embedding_dim = 5
+np.random.seed(0)
+W_embed = np.random.randn(len(vocab), embedding_dim)
 
-# Convert all sentences to vectors
-vectors = [bag_of_words(s, vocab) for s in sentences]
-print("Vectors:", vectors)
+def sentence_to_vector(sentence):
+    tokens = normalize(sentence)
+    vecs = [W_embed[word_to_idx[w]] for w in tokens if w in word_to_idx]
+    if vecs:
+        return np.mean(vecs, axis=0)  # simple average of embeddings
+    else:
+        return np.zeros(embedding_dim)
 
-#  Train model
-model = MultinomialNB()
-model.fit(vectors, labels)
+# Test
+for s in sentences:
+    vec = sentence_to_vector(s)
+    print(f"Sentence: {s} → Vector: {vec}")
 
-# Step 7: Chatting with the bot
-def chat():
-    while True:
-        user_input = input("You: ")
-        if user_input.lower() == "quit":
-            print("Bot: Goodbye!")
-            break
-        vector = [bag_of_words(user_input, vocab)]
-        prediction = model.predict(vector)
-        print("Bot:", prediction[0])
 
-# Start chat
-chat()
